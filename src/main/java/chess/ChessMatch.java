@@ -12,14 +12,14 @@ import java.util.List;
 public class ChessMatch {
     private int turn;
     private Color currentPlayer;
-    private Board board;
+    private final Board board;
     private boolean check;
     private boolean checkMate;
     private ChessPiece enPassantVulnerable;
     private ChessPiece promoted;
 
-    private List<Piece> piecesOnTheBoard = new ArrayList<>();
-    private List<Piece> capturedPieces = new ArrayList<>();
+    private final List<Piece> piecesOnTheBoard = new ArrayList<>();
+    private final List<Piece> capturedPieces = new ArrayList<>();
 
     public ChessMatch() {
         final int DEFAULT_COLUMNS = 8;
@@ -41,7 +41,7 @@ public class ChessMatch {
     }
 
     public boolean getCheckMate() {
-        return checkMate;
+        return !checkMate;
     }
 
     public ChessPiece getEnPassantVulnerable() {
@@ -144,15 +144,12 @@ public class ChessMatch {
     }
 
     private ChessPiece newPiece(String type, Color color) {
-        if (type.equals("B")) {
-            return new Bishop(board, color);
-        } else if (type.equals("N")) {
-            return new Knight(board, color);
-        } else if (type.equals("Q")) {
-            return new Queen(board, color);
-        } else {
-            return new Rook(board, color);
-        }
+        return switch (type) {
+            case "B" -> new Bishop(board, color);
+            case "N" -> new Knight(board, color);
+            case "Q" -> new Queen(board, color);
+            default -> new Rook(board, color);
+        };
     }
 
     private Piece makeMove(Position source, Position target) {

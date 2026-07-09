@@ -7,7 +7,7 @@ import chess.ChessPiece;
 import chess.Color;
 
 public class King extends ChessPiece {
-    private ChessMatch chessMatch;
+    private final ChessMatch chessMatch;
 
     public King(Board board, Color color, ChessMatch chessMatch) {
         super(board, color);
@@ -26,7 +26,7 @@ public class King extends ChessPiece {
 
     private boolean testRookCastling(Position pos) {
         ChessPiece p = (ChessPiece) getBoard().piece(pos);
-        return p != null && p instanceof Rook && ((Rook) p).getColor() == getColor() && p.getMoveCount() == 0;
+        return p instanceof Rook && p.getColor() == getColor() && p.getMoveCount() == 0;
     }
 
     @Override
