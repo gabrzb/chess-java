@@ -5,6 +5,8 @@ A terminal-based chess game written in Java. The project models a complete chess
 ## Features
 
 - Two-player chess match in the console
+- Single-player chess match against an AI opponent
+- Three AI difficulty levels using Minimax with Alpha-Beta pruning
 - Standard 8x8 board with coordinates from `a1` to `h8`
 - Legal move validation for all chess pieces
 - Highlighting of possible moves after selecting a source piece
@@ -37,10 +39,15 @@ src/main/java
 |   +-- Position.java      # Matrix position representation
 +-- chess
     +-- ChessMatch.java    # Chess match rules and state
+    +-- ChessMove.java     # Chess move value object
     +-- ChessPiece.java    # Chess-specific piece abstraction
     +-- ChessPosition.java # Chess notation position conversion
     +-- Color.java
     +-- ChessException.java
+    +-- ai
+    |   +-- BoardEvaluator.java # AI board scoring
+    |   +-- ChessAI.java        # Minimax with Alpha-Beta pruning
+    |   +-- Difficulty.java     # AI difficulty levels
     +-- pieces
         +-- Bishop.java
         +-- King.java
@@ -84,6 +91,33 @@ java -cp target/classes application.Main
 
 ## How to Play
 
+At startup, choose the game mode:
+
+```text
+Game mode:
+1 - Human vs Human
+2 - Human vs AI
+```
+
+In AI mode, choose the difficulty and your color:
+
+```text
+Difficulty:
+1 - Easy
+2 - Medium
+3 - Hard
+
+Player color:
+1 - White
+2 - Black
+```
+
+AI difficulty levels:
+
+- Easy: depth 1 search, with some random choice among similarly scored moves
+- Medium: depth 2 search, deterministic best move
+- Hard: depth 3 search, with basic move ordering for captures, promotions, and checks
+
 The game asks for a source position and then a target position.
 
 Example opening move:
@@ -119,6 +153,8 @@ When a pawn reaches the last rank, choose the promotion piece:
 Enter piece for promotion (B/N/R/Q):
 ```
 
+AI pawn promotion is automatic and always promotes to queen.
+
 ## Game Rules Implemented
 
 The engine prevents illegal moves, including moves that leave the current player's king in check. A match ends when checkmate is detected.
@@ -132,13 +168,14 @@ Implemented rule coverage includes:
 - Castling restrictions based on king/rook movement and board occupancy
 - En passant availability after a two-square pawn advance
 - Pawn promotion
+- AI legal move generation reuses the same match rules as human moves
 
 ## Developer Notes
 
 - The repository currently does not include an automated test suite.
 - The Maven wrapper files (`mvnw`, `mvnw.cmd`) are not included, so Maven must be installed globally to use Maven commands.
 - The console UI uses ANSI escape codes for colors and screen clearing. On some terminals, ANSI support may need to be enabled.
-- A single player mode or AI opponent is not implemented but could be added in the future.
+- The AI code lives under `chess.ai`; board primitives and piece movement rules stay outside that package.
 
 ## Verification
 

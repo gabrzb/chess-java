@@ -4,6 +4,7 @@ import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.Color;
+import chess.ai.Difficulty;
 
 import java.util.Arrays;
 import java.util.InputMismatchException;
@@ -30,6 +31,63 @@ public class UI {
             return new ChessPosition(col, row);
         } catch (Exception ex) {
             throw new InputMismatchException("Error reading ChessPosition. Valid values are from a1 to h8.");
+        }
+    }
+
+    public static int readGameMode(Scanner sc) {
+        while (true) {
+            System.out.println("Game mode:");
+            System.out.println("1 - Human vs Human");
+            System.out.println("2 - Human vs AI");
+            System.out.print("Choose: ");
+            String option = sc.nextLine();
+
+            if (option.equals("1") || option.equals("2")) {
+                return Integer.parseInt(option);
+            }
+
+            System.out.println("Invalid option");
+        }
+    }
+
+    public static Difficulty readDifficulty(Scanner sc) {
+        while (true) {
+            System.out.println("Difficulty:");
+            System.out.println("1 - Easy");
+            System.out.println("2 - Medium");
+            System.out.println("3 - Hard");
+            System.out.print("Choose: ");
+            String option = sc.nextLine();
+
+            switch (option) {
+                case "1":
+                    return Difficulty.EASY;
+                case "2":
+                    return Difficulty.MEDIUM;
+                case "3":
+                    return Difficulty.HARD;
+                default:
+                    System.out.println("Invalid option");
+            }
+        }
+    }
+
+    public static Color readPlayerColor(Scanner sc) {
+        while (true) {
+            System.out.println("Player color:");
+            System.out.println("1 - White");
+            System.out.println("2 - Black");
+            System.out.print("Choose: ");
+            String option = sc.nextLine();
+
+            if (option.equals("1")) {
+                return Color.WHITE;
+            }
+            if (option.equals("2")) {
+                return Color.BLACK;
+            }
+
+            System.out.println("Invalid option");
         }
     }
 

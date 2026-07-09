@@ -2,8 +2,12 @@ package application;
 
 import chess.ChessException;
 import chess.ChessMatch;
+import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
+import chess.Color;
+import chess.ai.ChessAI;
+import chess.ai.Difficulty;
 
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -14,14 +18,49 @@ public class Main {
     void main () {
         Scanner sc = new Scanner(System.in);
         ChessMatch chessMatch = new ChessMatch();
-        List<ChessPiece> captured = new ArrayList<ChessPiece>();
+        List<ChessPiece> captured = new ArrayList<>();
+        int gameMode = UI.readGameMode(sc);
+        boolean againstAi = gameMode == 2;
+        Color humanColor = Color.WHITE;
+        ChessAI ai = null;
+        ChessMove lastAiMove = null;
+
+        if (againstAi) {
+            Difficulty difficulty = UI.readDifficulty(sc);
+            humanColor = UI.readPlayerColor(sc);
+            Color aiColor = humanColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+            ai = new ChessAI(aiColor, difficulty);
+        }
 
         while (chessMatch.getCheckMate()) {
             try {
                 UI.clearScreen();
                 UI.printMatch(chessMatch, captured);
 
+                if (lastAiMove != null) {
+                    System.out.println("AI move: " + lastAiMove);
+                }
+
                 System.out.println();
+
+                if (againstAi && chessMatch.getCurrentPlayer() != humanColor) {
+                    System.out.println("AI is thinking...");
+                    ChessMove aiMove = ai.chooseMove(chessMatch);
+
+                    if (aiMove == null) {
+                        break;
+                    }
+
+                    ChessPiece capturedPiece = chessMatch.performChessMove(aiMove);
+
+                    if (capturedPiece != null) {
+                        captured.add(capturedPiece);
+                    }
+
+                    lastAiMove = aiMove;
+                    continue;
+                }
+
                 System.out.print("Source: ");
                 ChessPosition source = UI.readChessPosition(sc);
 
@@ -37,18 +76,10 @@ public class Main {
                     captured.add(capturedPiece);
                 }
 
-                if (chessMatch.getPromoted() != null) {
-                    while (true) {
-                        System.out.print("Enter piece for promotion (B/N/R/Q): ");
-                        String type = sc.nextLine().toUpperCase();
+                lastAiMove = null;
 
-                        if (type.equals("B") || type.equals("N") || type.equals("R") || type.equals("Q")) {
-                            chessMatch.replacePromotedPiece(type);
-                            break;
-                        } else {
-                            System.out.println("Invalid promotion type");
-                        }
-                    }
+                if (chessMatch.getPromoted() != null) {
+                    promoteHumanPawn(sc, chessMatch);
                 }
             } catch (ChessException | InputMismatchException e) {
                 System.out.println(e.getMessage());
@@ -59,5 +90,19 @@ public class Main {
 
         UI.clearScreen();
         UI.printMatch(chessMatch, captured);
+    }
+
+    private void promoteHumanPawn(Scanner sc, ChessMatch chessMatch) {
+        while (true) {
+            System.out.print("Enter piece for promotion (B/N/R/Q): ");
+            String type = sc.nextLine().toUpperCase();
+
+            if (type.equals("B") || type.equals("N") || type.equals("R") || type.equals("Q")) {
+                chessMatch.replacePromotedPiece(type);
+                break;
+            } else {
+                System.out.println("Invalid promotion type");
+            }
+        }
     }
 }
