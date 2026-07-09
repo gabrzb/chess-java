@@ -133,11 +133,12 @@ Implemented rule coverage includes:
 - En passant availability after a two-square pawn advance
 - Pawn promotion
 
-## Development Notes
+## Developer Notes
 
 - The repository currently does not include an automated test suite.
 - The Maven wrapper files (`mvnw`, `mvnw.cmd`) are not included, so Maven must be installed globally to use Maven commands.
 - The console UI uses ANSI escape codes for colors and screen clearing. On some terminals, ANSI support may need to be enabled.
+- A single player mode or AI opponent is not implemented but could be added in the future.
 
 ## Verification
 
