@@ -1,16 +1,23 @@
 package chess.ai;
 
-import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.Color;
-import chess.pieces.Bishop;
-import chess.pieces.Knight;
-import chess.pieces.Pawn;
-import chess.pieces.Queen;
-import chess.pieces.Rook;
+import chess.GameStateView;
+import chess.PieceType;
+
+import java.util.Map;
 
 public class BoardEvaluator {
-    public int evaluate(ChessMatch match, Color aiColor) {
+    private static final Map<PieceType, Integer> PIECE_VALUES = Map.of(
+            PieceType.PAWN, 100,
+            PieceType.KNIGHT, 320,
+            PieceType.BISHOP, 330,
+            PieceType.ROOK, 500,
+            PieceType.QUEEN, 900,
+            PieceType.KING, 0
+    );
+
+    public int evaluate(GameStateView match, Color aiColor) {
         Color opponent = opponent(aiColor);
         int score = materialScore(match, aiColor);
         score += 5 * (match.getLegalMoves(aiColor).size() - match.getLegalMoves(opponent).size());
@@ -25,7 +32,7 @@ public class BoardEvaluator {
         return score;
     }
 
-    private int materialScore(ChessMatch match, Color aiColor) {
+    private int materialScore(GameStateView match, Color aiColor) {
         int score = 0;
         ChessPiece[][] pieces = match.getPieces();
 
@@ -34,32 +41,13 @@ public class BoardEvaluator {
                 ChessPiece piece = pieces[row][col];
 
                 if (piece != null) {
-                    int value = pieceValue(piece) + centralBonus(row, col);
+                    int value = PIECE_VALUES.get(piece.getType()) + centralBonus(row, col);
                     score += piece.getColor() == aiColor ? value : -value;
                 }
             }
         }
 
         return score;
-    }
-
-    private int pieceValue(ChessPiece piece) {
-        if (piece instanceof Pawn) {
-            return 100;
-        }
-        if (piece instanceof Knight) {
-            return 320;
-        }
-        if (piece instanceof Bishop) {
-            return 330;
-        }
-        if (piece instanceof Rook) {
-            return 500;
-        }
-        if (piece instanceof Queen) {
-            return 900;
-        }
-        return 0;
     }
 
     private int centralBonus(int row, int col) {

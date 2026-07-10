@@ -4,6 +4,7 @@ import boardgame.Board;
 import boardgame.Position;
 import chess.ChessPiece;
 import chess.Color;
+import chess.PieceType;
 
 public class Rook extends ChessPiece {
 
@@ -14,6 +15,11 @@ public class Rook extends ChessPiece {
     @Override
     public String toString() {
         return "R";
+    }
+
+    @Override
+    public PieceType getType() {
+        return PieceType.ROOK;
     }
 
     @Override

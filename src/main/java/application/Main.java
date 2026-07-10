@@ -6,8 +6,10 @@ import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.Color;
-import chess.ai.ChessAI;
 import chess.ai.Difficulty;
+import chess.ai.MinimaxAI;
+import chess.MatchStatus;
+import chess.player.MoveStrategy;
 
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -22,17 +24,17 @@ public class Main {
         int gameMode = UI.readGameMode(sc);
         boolean againstAi = gameMode == 2;
         Color humanColor = Color.WHITE;
-        ChessAI ai = null;
+        MoveStrategy ai = null;
         ChessMove lastAiMove = null;
 
         if (againstAi) {
             Difficulty difficulty = UI.readDifficulty(sc);
             humanColor = UI.readPlayerColor(sc);
             Color aiColor = humanColor == Color.WHITE ? Color.BLACK : Color.WHITE;
-            ai = new ChessAI(aiColor, difficulty);
+            ai = new MinimaxAI(aiColor, difficulty);
         }
 
-        while (chessMatch.getCheckMate()) {
+        while (chessMatch.getStatus() == MatchStatus.IN_PROGRESS) {
             try {
                 UI.clearScreen();
                 UI.printMatch(chessMatch, captured);

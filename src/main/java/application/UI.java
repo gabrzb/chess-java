@@ -4,6 +4,7 @@ import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.Color;
+import chess.MatchStatus;
 import chess.ai.Difficulty;
 
 import java.util.Arrays;
@@ -98,15 +99,18 @@ public class UI {
         System.out.println();
         System.out.println("Turn: " + chessMatch.getTurn());
 
-        if (chessMatch.getCheckMate()) {
+        if (chessMatch.getStatus() == MatchStatus.IN_PROGRESS) {
             System.out.println("Waiting player: " + chessMatch.getCurrentPlayer());
 
-            if (chessMatch.getCheck()) {
+            if (chessMatch.isCheck()) {
                 System.out.println("CHECK!");
             }
-        } else {
+        } else if (chessMatch.isCheckMate()) {
             System.out.println("CHECKMATE!");
             System.out.println("Winner: " + chessMatch.getCurrentPlayer());
+        } else {
+            System.out.println("STALEMATE!");
+            System.out.println("Draw");
         }
     }
 

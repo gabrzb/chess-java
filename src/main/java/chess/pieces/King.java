@@ -5,6 +5,7 @@ import boardgame.Position;
 import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.Color;
+import chess.PieceType;
 
 public class King extends ChessPiece {
     private final ChessMatch chessMatch;
@@ -17,6 +18,11 @@ public class King extends ChessPiece {
     @Override
     public String toString() {
         return "K";
+    }
+
+    @Override
+    public PieceType getType() {
+        return PieceType.KING;
     }
 
     private boolean canMove(Position pos) {
@@ -84,7 +90,7 @@ public class King extends ChessPiece {
         }
 
         // special move castling
-        if (getMoveCount() == 0 && !chessMatch.getCheck()) {
+        if (getMoveCount() == 0 && !chessMatch.isCheck()) {
             // castling kingside rook
             Position posT1 = new Position(position.getRow(), position.getCol() + 3);
             if (testRookCastling(posT1)) {

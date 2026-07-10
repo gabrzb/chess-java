@@ -4,6 +4,7 @@ import boardgame.Board;
 import boardgame.Position;
 import chess.ChessPiece;
 import chess.Color;
+import chess.PieceType;
 
 public class Queen extends ChessPiece {
 
@@ -14,6 +15,11 @@ public class Queen extends ChessPiece {
     @Override
     public String toString() {
         return "Q";
+    }
+
+    @Override
+    public PieceType getType() {
+        return PieceType.QUEEN;
     }
 
     @Override

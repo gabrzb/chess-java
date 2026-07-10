@@ -5,6 +5,7 @@ import boardgame.Position;
 import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.Color;
+import chess.PieceType;
 
 public class Pawn extends ChessPiece {
     private final ChessMatch chessMatch;
@@ -17,6 +18,11 @@ public class Pawn extends ChessPiece {
     @Override
     public String toString () {
         return "P";
+    }
+
+    @Override
+    public PieceType getType() {
+        return PieceType.PAWN;
     }
 
     @Override

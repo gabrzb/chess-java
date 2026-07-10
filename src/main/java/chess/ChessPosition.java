@@ -2,6 +2,8 @@ package chess;
 
 import boardgame.Position;
 
+import java.util.Objects;
+
 public class ChessPosition {
     private final char col;
     private final int row;
@@ -29,6 +31,22 @@ public class ChessPosition {
 
     protected static ChessPosition fromPosition(Position pos) {
         return new ChessPosition((char) ('a' + pos.getCol()), 8 - pos.getRow());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ChessPosition that)) {
+            return false;
+        }
+        return col == that.col && row == that.row;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(col, row);
     }
 
     @Override

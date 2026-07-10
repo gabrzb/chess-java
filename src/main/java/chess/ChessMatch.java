@@ -9,12 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ChessMatch {
+public class ChessMatch implements GameStateView {
+    private static final int DEFAULT_COLUMNS = 8;
+    private static final int DEFAULT_ROWS = 8;
+
     private int turn;
     private Color currentPlayer;
     private final Board board;
     private boolean check;
     private boolean checkMate;
+    private MatchStatus status;
     private ChessPiece enPassantVulnerable;
     private ChessPiece promoted;
 
@@ -22,26 +26,80 @@ public class ChessMatch {
     private final List<Piece> capturedPieces = new ArrayList<>();
 
     public ChessMatch() {
-        final int DEFAULT_COLUMNS = 8;
-        final int DEFAULT_ROWS = 8;
+        this(true);
+    }
 
+    ChessMatch(boolean setupInitialPosition) {
         turn = 1;
         currentPlayer = Color.WHITE;
+        status = MatchStatus.IN_PROGRESS;
 
         board = new Board(DEFAULT_ROWS, DEFAULT_COLUMNS);
-        initialSetup();
+        if (setupInitialPosition) {
+            initialSetup();
+        }
+    }
+
+    ChessMatch(ChessMatch other) {
+        turn = other.turn;
+        currentPlayer = other.currentPlayer;
+        check = other.check;
+        checkMate = other.checkMate;
+        status = other.status;
+        board = new Board(DEFAULT_ROWS, DEFAULT_COLUMNS);
+
+        ChessPosition enPassantPosition = other.enPassantVulnerable == null ? null : other.enPassantVulnerable.getChessPosition();
+        ChessPosition promotedPosition = other.promoted == null ? null : other.promoted.getChessPosition();
+        ChessPiece[][] pieces = other.getPieces();
+
+        for (int row = 0; row < pieces.length; row++) {
+            for (int col = 0; col < pieces[row].length; col++) {
+                ChessPiece original = pieces[row][col];
+
+                if (original != null) {
+                    ChessPiece copy = newPiece(original.getType(), original.getColor());
+                    copy.setMoveCount(original.getMoveCount());
+                    Position position = new Position(row, col);
+                    board.placePiece(copy, position);
+                    piecesOnTheBoard.add(copy);
+
+                    ChessPosition chessPosition = ChessPosition.fromPosition(position);
+                    if (chessPosition.equals(enPassantPosition)) {
+                        enPassantVulnerable = copy;
+                    }
+                    if (chessPosition.equals(promotedPosition)) {
+                        promoted = copy;
+                    }
+                }
+            }
+        }
+
+        for (Piece capturedPiece : other.capturedPieces) {
+            ChessPiece original = (ChessPiece) capturedPiece;
+            ChessPiece copy = newPiece(original.getType(), original.getColor());
+            copy.setMoveCount(original.getMoveCount());
+            capturedPieces.add(copy);
+        }
     }
 
     public int getTurn() {
         return turn;
     }
 
-    public boolean getCheck() {
+    public boolean isCheck() {
         return check;
     }
 
-    public boolean getCheckMate() {
-        return !checkMate;
+    public boolean isCheckMate() {
+        return checkMate;
+    }
+
+    public boolean isStalemate() {
+        return status == MatchStatus.STALEMATE;
+    }
+
+    public MatchStatus getStatus() {
+        return status;
     }
 
     public ChessPiece getEnPassantVulnerable() {
@@ -122,13 +180,14 @@ public class ChessMatch {
         return performChessMove(move.getSource(), move.getTarget());
     }
 
-    public SearchState makeMoveForSearch(ChessMove move) {
+    SearchState makeMoveForSearch(ChessMove move) {
         Position source = move.getSource().toPosition();
         Position target = move.getTarget().toPosition();
         Color previousCurrentPlayer = currentPlayer;
         int previousTurn = turn;
         boolean previousCheck = check;
         boolean previousCheckMate = checkMate;
+        MatchStatus previousStatus = status;
         ChessPiece previousEnPassantVulnerable = enPassantVulnerable;
         ChessPiece previousPromoted = promoted;
 
@@ -153,7 +212,6 @@ public class ChessMatch {
         ChessPiece pieceAfterMove = (ChessPiece) board.piece(target);
         Color movedColor = pieceAfterMove.getColor();
         check = testCheck(opponent(movedColor));
-        checkMate = testCheckMate(opponent(movedColor));
 
         if (movedPiece instanceof Pawn &&
                 (
@@ -165,6 +223,12 @@ public class ChessMatch {
             enPassantVulnerable = null;
         }
 
+        updateStatusAfterMove(opponent(movedColor));
+
+        if (status == MatchStatus.IN_PROGRESS) {
+            nextTurn();
+        }
+
         return new SearchState(
                 source,
                 target,
@@ -173,6 +237,7 @@ public class ChessMatch {
                 previousTurn,
                 previousCheck,
                 previousCheckMate,
+                previousStatus,
                 previousEnPassantVulnerable,
                 previousPromoted,
                 promotedPawn,
@@ -180,7 +245,7 @@ public class ChessMatch {
         );
     }
 
-    public void undoMoveForSearch(SearchState state) {
+    void undoMoveForSearch(SearchState state) {
         if (state.promotedPiece != null) {
             Piece p = board.removePiece(state.target);
             piecesOnTheBoard.remove(p);
@@ -195,6 +260,7 @@ public class ChessMatch {
         turn = state.previousTurn;
         check = state.previousCheck;
         checkMate = state.previousCheckMate;
+        status = state.previousStatus;
         enPassantVulnerable = state.previousEnPassantVulnerable;
         promoted = state.previousPromoted;
     }
@@ -229,12 +295,6 @@ public class ChessMatch {
 
         check = testCheck(opponent(currentPlayer));
 
-        if (testCheckMate(opponent(currentPlayer))) {
-            checkMate = true;
-        } else {
-            nextTurn();
-        }
-
         // special move en passant
         if (movedPiece instanceof Pawn &&
                 (
@@ -244,6 +304,12 @@ public class ChessMatch {
             enPassantVulnerable = movedPiece;
         } else {
             enPassantVulnerable = null;
+        }
+
+        updateStatusAfterMove(opponent(currentPlayer));
+
+        if (status == MatchStatus.IN_PROGRESS) {
+            nextTurn();
         }
 
         return (ChessPiece) capturedPiece;
@@ -268,7 +334,7 @@ public class ChessMatch {
         return newPiece;
     }
 
-    public static class SearchState {
+    static class SearchState {
         private final Position source;
         private final Position target;
         private final Piece capturedPiece;
@@ -276,6 +342,7 @@ public class ChessMatch {
         private final int previousTurn;
         private final boolean previousCheck;
         private final boolean previousCheckMate;
+        private final MatchStatus previousStatus;
         private final ChessPiece previousEnPassantVulnerable;
         private final ChessPiece previousPromoted;
         private final ChessPiece promotedPawn;
@@ -289,6 +356,7 @@ public class ChessMatch {
                 int previousTurn,
                 boolean previousCheck,
                 boolean previousCheckMate,
+                MatchStatus previousStatus,
                 ChessPiece previousEnPassantVulnerable,
                 ChessPiece previousPromoted,
                 ChessPiece promotedPawn,
@@ -301,6 +369,7 @@ public class ChessMatch {
             this.previousTurn = previousTurn;
             this.previousCheck = previousCheck;
             this.previousCheckMate = previousCheckMate;
+            this.previousStatus = previousStatus;
             this.previousEnPassantVulnerable = previousEnPassantVulnerable;
             this.previousPromoted = previousPromoted;
             this.promotedPawn = promotedPawn;
@@ -315,6 +384,21 @@ public class ChessMatch {
             case "Q" -> new Queen(board, color);
             default -> new Rook(board, color);
         };
+    }
+
+    private ChessPiece newPiece(PieceType type, Color color) {
+        return switch (type) {
+            case BISHOP -> new Bishop(board, color);
+            case KNIGHT -> new Knight(board, color);
+            case QUEEN -> new Queen(board, color);
+            case ROOK -> new Rook(board, color);
+            case KING -> new King(board, color, this);
+            case PAWN -> new Pawn(board, color, this);
+        };
+    }
+
+    void placeNewPiece(char col, int row, PieceType type, Color color) {
+        placeNewPiece(col, row, newPiece(type, color));
     }
 
     private Piece makeMove(Position source, Position target) {
@@ -502,6 +586,23 @@ public class ChessMatch {
         }
 
         return true;
+    }
+
+    private void updateStatusAfterMove(Color nextPlayer) {
+        List<ChessMove> nextPlayerMoves = getLegalMoves(nextPlayer);
+
+        if (nextPlayerMoves.isEmpty()) {
+            if (testCheck(nextPlayer)) {
+                checkMate = true;
+                status = MatchStatus.CHECKMATE;
+            } else {
+                checkMate = false;
+                status = MatchStatus.STALEMATE;
+            }
+        } else {
+            checkMate = false;
+            status = MatchStatus.IN_PROGRESS;
+        }
     }
 
     private void placeNewPiece(char col, int row, ChessPiece piece) {
